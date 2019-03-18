@@ -22,6 +22,20 @@ float delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool ad
 		return new_output_speed;											//Return Calculated Value
 	}	
 }
+float rotate_counter_clockwise(float radius, float speed_right)
+{
+	const int Wc = 6;
+	float speed_left =  ((Wc+radius)/radius)*speed_right;
+	return speed_left;	
+}
+
+float rotate_clockwise(float radius, float speed_left)
+{
+	const int Wc;
+	float speed_right =  speed_left*((Wc+radius)/radius);
+	return speed_right;	
+}
+	
 };
 #endif
 
