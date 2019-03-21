@@ -17,8 +17,10 @@ HBridgeDCmotor hbdcmotor_R, hbdcmotor_L;									//Objects "hbdcmotor L&R" decla
 
 //System Constants
 const int inp_interr_on_circle=49;											//Interupt Number
-const int Wc = 6;															//Width of car	
-
+const int Wc = 6;															//Width of car
+const int wheel_diameter = 57;	
+const int default_PWM = 60;
+const int default_speed = 100;
 //Global Variables
 double RPM_R;
 double RPM_L;
@@ -51,6 +53,28 @@ void setup_PID()
 	MotorRight.setTunings(Kp,Ki,Kd);  										//Initialise Gain Parameters R
 	MotorLeft.PID_SetupControl(lowerbound, upperbound, control_interval_ms);
 	MotorRight.PID_SetupControl(lowerbound, upperbound, control_interval_ms);
+}
+
+void master_Setup()
+{
+	setup_Hardware();
+	setup_speed_measurement();
+	setup_PID();
+}
+
+//Calculation Functions
+double distance_traveled_L()
+{
+	double rotations = rotation_counter_L.GetkDistanceCount();           //Count and Store Number of Rotations
+	double distance = (rotations/49)*((3.1415926539)*wheel_diameter);	//Calculate and Store Distance
+	return distance;													//Allow for external acess
+}
+
+double distance_traveled_R()
+{
+	double rotations = rotation_counter_R.GetkDistanceCount();           //Count and Store Number of Rotations
+	double distance = (rotations/49)*((3.1415926539)*wheel_diameter);
+	return distance;
 }
 
 //Opperational Functions
@@ -87,24 +111,32 @@ void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add
 	}
 }
 
-void rotate_counter_clockwise(int radius)
+void rotate_counter_clockwise(int radius, int inp_RPM_R)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
+	hbdcmotor_R.start();													//Start Left Motor
+	hbdcmotor_R.setSpeedPWM(default_PWM);									//Set Speed in PWM
 	float circumfrance = 2*(3.1415926539)*radius;							//Calculate circumfrance
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
 		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
 	}
-	RPM_L =  ((Wc+radius)/radius)*RPM_R;				    				//Calculate Left Wheel Velocity
+	double PWM_R=MotorRight.ComputePID_output(inp_RPM_R,RPM_L);				//Compute Required PWM output
+	double target_RPM_L =  ((Wc+radius)/radius)*RPM_R;				    	//Calculate Left Wheel Velocity
 	double PWM_L=MotorLeft.ComputePID_output(speed_left,RPM_L);				//Compute Required PWM output
 	hbdcmotor_L.start();													//Start Left Motor
 	hbdcmotor_L.setSpeedPWM(PWM_L);											//Set Speed in PWM
-	//Use circumfrance as limit inside an if statement i.e if(distance>=circumfrance) {motor.stop();}
+	double distance = distance_traveled_L();
+	if (distance >= circumfrance)
+	{
+		hbdcmotor_R.stop();													//Stop Right Motor
+		hbdcmotor_L.stop();													//Stop Left Motor
+	}
 }
 
-void rotate_clockwise(int radius)
+void rotate_clockwise(int radius, int inp_RPM_L)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
@@ -114,14 +146,22 @@ void rotate_clockwise(int radius)
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
 		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
 	}
-	RPM_R =  ((Wc+radius)/radius)*RPM_L;				    				//Calculate Left Wheel Velocity
-	double PWM_R=MotorRight.ComputePID_output(speed_right,RPM_R);			//Compute Required PWM output
+	double PWM_L=MotorLeft.ComputePID_output(inp_RPM_L,RPM_L);				//Compute Required PWM output
+	double Target_RPM_R =  ((Wc+radius)/radius)*RPM_L;				    	//Calculate Left Wheel Velocity
+	double PWM_R=MotorRight.ComputePID_output(Target_RPM_R,RPM_R);			//Compute Required PWM output
+	hbdcmotor_L.start();													//Start Left Motor
+	hbdcmotor_L.setSpeedPWM(default_PWM);									//Set Speed in PWM
 	hbdcmotor_R.start();													//Start Right Motor
 	hbdcmotor_R.setSpeedPWM(PWM_R);											//Set Speed in PWM
-	//Use circumfrance as limit inside an if statement i.e if(distance>=circumfrance) {motor.stop();}
+	double distance = distance_traveled_R();
+	if (distance >= circumfrance)
+	{
+		hbdcmotor_R.stop();													//Stop Right Motor
+		hbdcmotor_L.stop();													//Stop Left Motor
+	}
 }
 
-float turn_90_L()
+void turn_90_L(int inp_RPM_L)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
@@ -130,13 +170,18 @@ float turn_90_L()
 	{
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
 	}
-	double PWM_L=MotorLeft.ComputePID_output(speed_left,RPM_L);				//Compute Required PWM output
+	double PWM_L=MotorLeft.ComputePID_output(inp_RPM_L,RPM_L);				//Compute Required PWM output
 	hbdcmotor_L.start();													//Start Left Motor
 	hbdcmotor_L.setSpeedPWM(PWM_L);											//Set Speed in PWM
-	//Use quarter_turn_distance as limit inside an if statement i.e if(distance>=quarter_turn_distance) {motor.stop();}	
+	double distance = distance_traveled_L();
+	if (distance >= quarter_turn_distance)
+	{
+		hbdcmotor_R.stop();													//Stop Right Motor
+		hbdcmotor_L.stop();													//Stop Left Motor
+	}
 }
 
-float turn_90_R()
+void turn_90_R(int inp_RPM_R)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
@@ -146,9 +191,14 @@ float turn_90_R()
 	{
 		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
 	}
-	double PWM_R=MotorRight.ComputePID_output(speed_right,RPM_R);			//Compute Required PWM output
+	double PWM_R=MotorRight.ComputePID_output(inp_RPM_R,RPM_R);				//Compute Required PWM output
 	hbdcmotor_R.setSpeedPWM(PWM_R);											//Set Speed in PWM
-	//Use quarter_turn_distance as limit inside an if statement i.e if(distance>=quarter_turn_distance) {motor.stop();}	
+	double distance = distance_traveled_R();
+	if (distance >= quarter_turn_distance)
+	{
+		hbdcmotor_R.stop();													//Stop Right Motor
+		hbdcmotor_L.stop();													//Stop Left Motor
+	}
 }
 };
-#endif																		//End Class Decleration
+#endif																		//End Class Decleration												//End Class Decleration
