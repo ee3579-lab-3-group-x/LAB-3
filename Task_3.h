@@ -15,8 +15,8 @@ SystemControler MotorLeft, MotorRight;										          //Objects "Motor L&R" 
 HBridgeDCmotor hbdcmotor_R, hbdcmotor_L;									          //Objects "hbdcmotor L&R" declared from class "HBridgeDCmotor"
 basic_speed_PID motor_L, motor_R;
 //System Constants
-const int Wc = 100;															                      //Width of car
-const int wheel_diameter = 570;	                                    //Diameter of wheel (mm)
+const int Wc = 100;															                     //Width of car (mm)
+const int wheel_diameter = 57;	                                    //Diameter of wheel (mm)
 const int default_PWM = 60;                                         //Default PWM Value
 const int default_speed = 800;                                      //Default Speed (RPM)
 
@@ -99,14 +99,18 @@ void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add
 			RPM_R=rotation_counter_R.getRPMandUpdate();						              //Get Speed of Right Motor in RPM
 			RPM_L=rotation_counter_L.getRPMandUpdate();						              //Get Speed of Left Motor in RPM
 		}
-		double PWM_L=motor_L.ComputePID_output(new_output_speed,RPM_L);       //Compute Required PWM output Right
-   
-		hbdcmotor_L.start();												                          //Start Left Motor
-		hbdcmotor_L.setSpeedPWM(PWM_L);										                    //Set Speed in PWM
-		
-		double PWM_R=motor_R.ComputePID_output(new_output_speed,RPM_R);       //Compute Required PWM output Left
-		hbdcmotor_R.start();												                          //Start Right Motor
-		hbdcmotor_R.setSpeedPWM(PWM_R);										                    //Set Speed in PWM
+     for (int i = 0; i < itterative_counter; i++)
+     {
+    		double PWM_L=motor_L.ComputePID_output(new_output_speed,RPM_L);       //Compute Required PWM output Right
+        hbdcmotor_L. set_jumpstart(true);                                     //Jumpstart Left Motor
+    		hbdcmotor_L.start();												                          //Start Left Motor
+    		hbdcmotor_L.setSpeedPWM(PWM_L);										                    //Set Speed in PWM
+    		double PWM_R=motor_R.ComputePID_output(new_output_speed,RPM_R);       //Compute Required PWM output Left
+        hbdcmotor_R. set_jumpstart(true);                                      //Jumpstart Right Motor
+    		hbdcmotor_R.start();												                          //Start Right Motor
+    		hbdcmotor_R.setSpeedPWM(PWM_R);										                    //Set Speed in PWM
+        i++;
+    }
 	}
 }
 
@@ -212,4 +216,4 @@ void turn_90_R(int inp_RPM_R)                                               //Fu
   }
 }
 };
-#endif																		                                  //End Class Decleration						                                  //End Class Decleration
+#endif																		                                  //End Class Decleration																	                                  //End Class Decleration						                                  //End Class Decleration
