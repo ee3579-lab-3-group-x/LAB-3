@@ -114,7 +114,7 @@ void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add
 	}
 }
 
-void rotate_clockwise(int radius, int inp_RPM_R)
+void rotate_clockwise(int radius, int inp_RPM_R, int itterations)
 {
   hbdcmotor_R.stop();                                       //Stop Right Motor
   hbdcmotor_L.stop();                                       //Stop Left Motor
@@ -126,7 +126,7 @@ void rotate_clockwise(int radius, int inp_RPM_R)
   }
 
   double distance = distance_traveled_R();                          //Calculate and Store Distance traveled
-  if (distance <= circumfrance){                                     //If distance travelled is >= desired path
+  if (distance <= circumfrance*itterations){                                     //If distance travelled is >= desired path
    hbdcmotor_R. set_jumpstart(true);                                //Jumpstart Right Motor
    hbdcmotor_L. set_jumpstart(true);                                //Jumpstart Left Motor
   double PWM_R=motor_R.ComputePID_output(inp_RPM_R,RPM_R);          //Compute Required PWM output
@@ -142,7 +142,7 @@ void rotate_clockwise(int radius, int inp_RPM_R)
   }
 }
 
-void rotate_counter_clockwise(int radius, int inp_RPM_L)
+void rotate_counter_clockwise(int radius, int inp_RPM_L, int itterations)
 {
 	hbdcmotor_R.stop();														            //Stop Right Motor
 	hbdcmotor_L.stop();														            //Stop Left Motor
@@ -154,7 +154,7 @@ void rotate_counter_clockwise(int radius, int inp_RPM_L)
 	}
 
 	double distance = distance_traveled_R();                          //Calculate and Store Distance traveled
-	if (distance <= circumfrance){                                     //If distance travelled is >= desired path
+	if (distance <= circumfrance*itterations){                                     //If distance travelled is >= desired path
    hbdcmotor_R. set_jumpstart(true);                                //Jumpstart Right Motor
    hbdcmotor_L. set_jumpstart(true);                                //Jumpstart Left Motor
   double PWM_L=motor_L.ComputePID_output(inp_RPM_L,RPM_L);          //Compute Required PWM output
@@ -216,4 +216,4 @@ void turn_90_R(int inp_RPM_R)                                               //Fu
   }
 }
 };
-#endif																		                                  //End Class Decleration																	                                  //End Class Decleration						                                  //End Class Decleration
+#endif																		                                  //End Class Decleration
