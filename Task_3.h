@@ -77,7 +77,7 @@ double distance_traveled_R()                                            //Functi
 }
 
 //Opperational Functions
-void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add, int itterative_counter)
+void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add, int itterative_counter, int RPM_LIMIT)
 {
 	float new_output_speed;													                        //Blank Local Variable
 	timer.setInterCheck(time_durr);											                    //Initialised Check Timer 
@@ -100,7 +100,11 @@ void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add
 			RPM_L=rotation_counter_L.getRPMandUpdate();						              //Get Speed of Left Motor in RPM
 		}
      for (int i = 0; i < itterative_counter; i++)
+     if(RPM_LIMIT>=RPM_L||RPM_LIMIT>=RPM_R)
      {
+        hbdcmotor_R.stop();                                       //Stop Right Motor
+        hbdcmotor_L.stop();                                       //Stop Left Motor
+     }else{
     		double PWM_L=motor_L.ComputePID_output(new_output_speed,RPM_L);       //Compute Required PWM output Right
         hbdcmotor_L. set_jumpstart(true);                                     //Jumpstart Left Motor
     		hbdcmotor_L.start();												                          //Start Left Motor
@@ -170,11 +174,11 @@ void rotate_counter_clockwise(int radius, int inp_RPM_L, int itterations)
 	}
 }
 
-void turn_90_L(int inp_RPM_L)                                                 //Function to turn 90 degrees to the left
+void turn_L(int inp_RPM_L,int angle)                                                 //Function to turn 90 degrees to the left
 {
 	hbdcmotor_R.stop();														                              //Stop Right Motor
 	hbdcmotor_L.stop();														                              //Stop Left Motor
-	float quarter_turn_distance = 0.5*(3.1415926539)*(wheel_diameter/2);				//Calculate Distance
+	float quarter_turn_distance = (2*(angle/360))*(3.1415926539)*(wheel_diameter/2);				//Calculate Distance
   double distance = distance_traveled_L();                                    //Calculate and Store Distance traveled
  
 	if(timer.isMinChekTimeElapsedAndUpdate())                                   //If check timer has expired...
@@ -193,11 +197,11 @@ void turn_90_L(int inp_RPM_L)                                                 //
 	}
 }
 
-void turn_90_R(int inp_RPM_R)                                               //Function to turn 90 degrees to the right
+void turn_R(int inp_RPM_R,int angle)                                               //Function to turn 90 degrees to the right
 {
   hbdcmotor_R.stop();                                                         //Stop Right Motor
   hbdcmotor_L.stop();                                                         //Stop Left Motor
-  float quarter_turn_distance = 0.5*(3.1415926539)*(wheel_diameter/2);        //Calculate Distance
+  float quarter_turn_distance = (2*(angle/360))*(3.1415926539)*(wheel_diameter/2);        //Calculate Distance
   double distance = distance_traveled_R();                                    //Calculate and Store Distance traveled
  
   if(timer.isMinChekTimeElapsedAndUpdate())                                   //If check timer has expired...
