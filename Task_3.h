@@ -1,10 +1,11 @@
+//Included Libraries
 #ifndef Task_3_h
 #define Task_3_h
 #include <IntervalCheckTimer.h>
 #include <InterruptBasedSpeedMeasure.h>
 #include <DCmotor.h>
 #include <InterruptBasedSpeedMeasure.h>
-#include <SystemControl_Unit.h>
+#include <SystemControl_Unit.h>												
 
 class task_3{
 public:
@@ -23,16 +24,15 @@ double RPM_R;
 double RPM_L;
 
 //Setup Functions
-
 void setup_Hardware()
 {
-  	int motorpin_L=5;														//Left PWM Pin
-  	int directionpin_L=7;													//Left Direction Pin
- 	int motorpin_R=8;														//Right PWM Pin
- 	int directionpin_R=10;													//Right Direction Pin
-  	MotorLeft.PID_SetupHardware(motorpin_L, directionpin, int_0);
-  	MotorRight.PID_SetupHardware(motorpin_R, directionpin, int_1);
-  	MotorRight.setup_HBridgeDCmotor(motorpin_R,directionpin_R);
+    int motorpin_L=5;														//Left PWM Pin
+    int directionpin_L=7;													//Left Direction Pin
+    int motorpin_R=8;														//Right PWM Pin
+    int directionpin_R=10;													//Right Direction Pin
+    MotorLeft.PID_SetupHardware(motorpin_L, directionpin, int_0);
+    MotorRight.PID_SetupHardware(motorpin_R, directionpin, int_1);
+    MotorRight.setup_HBridgeDCmotor(motorpin_R,directionpin_R);
 	MotorLeft.setup_HBridgeDCmotor(motorpin_L,directionpin_L);
 }
 
@@ -87,38 +87,37 @@ void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add
 	}
 }
 
-void rotate_counter_clockwise(float radius)
+void rotate_counter_clockwise(int radius)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
-	float speed_left =  ((Wc+radius)/radius)*speed_right;				    //Calculate Left Wheel Velocity
 	float circumfrance = 2*(3.1415926539)*radius;							//Calculate circumfrance
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
+		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
 	}
+	RPM_L =  ((Wc+radius)/radius)*RPM_R;				    				//Calculate Left Wheel Velocity
 	double PWM_L=MotorLeft.ComputePID_output(speed_left,RPM_L);				//Compute Required PWM output
 	hbdcmotor_L.start();													//Start Left Motor
 	hbdcmotor_L.setSpeedPWM(PWM_L);											//Set Speed in PWM
-	//Change speed to PWM Value
 	//Use circumfrance as limit inside an if statement i.e if(distance>=circumfrance) {motor.stop();}
 }
 
-void rotate_clockwise(float radius)
+void rotate_clockwise(int radius)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
-	float speed_right =  speed_left*((Wc+radius)/radius);					//Calculate Right Wheel Velocity
 	float circumfrance = 2*(3.1415926539)*radius;							//Calculate Circumfrance
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
+		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
 		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
-
 	}
+	RPM_R =  ((Wc+radius)/radius)*RPM_L;				    				//Calculate Left Wheel Velocity
 	double PWM_R=MotorRight.ComputePID_output(speed_right,RPM_R);			//Compute Required PWM output
 	hbdcmotor_R.start();													//Start Right Motor
 	hbdcmotor_R.setSpeedPWM(PWM_R);											//Set Speed in PWM
-	//Change speed to PWM Value
 	//Use circumfrance as limit inside an if statement i.e if(distance>=circumfrance) {motor.stop();}
 }
 
@@ -126,7 +125,7 @@ float turn_90_L()
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
-	float distance = 0.5*(3.1415926539)*radius;								//Calculate Distance
+	float quarter_turn_distance = 0.5*(3.1415926539)*radius;				//Calculate Distance
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
@@ -134,14 +133,14 @@ float turn_90_L()
 	double PWM_L=MotorLeft.ComputePID_output(speed_left,RPM_L);				//Compute Required PWM output
 	hbdcmotor_L.start();													//Start Left Motor
 	hbdcmotor_L.setSpeedPWM(PWM_L);											//Set Speed in PWM
-	//Use circumfrance as limit inside an if statement i.e if(distance>=circumfrance) {motor.stop();}	
+	//Use quarter_turn_distance as limit inside an if statement i.e if(distance>=quarter_turn_distance) {motor.stop();}	
 }
 
 float turn_90_R()
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
-	float distance = 0.5*(3.1415926539)*radius;								//Calculate Distance
+	float quarter_turn_distance = 0.5*(3.1415926539)*radius;				//Calculate Distance
 	hbdcmotor_R.start();													//Start Right Motor
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
@@ -149,8 +148,7 @@ float turn_90_R()
 	}
 	double PWM_R=MotorRight.ComputePID_output(speed_right,RPM_R);			//Compute Required PWM output
 	hbdcmotor_R.setSpeedPWM(PWM_R);											//Set Speed in PWM
-	//Use circumfrance as limit inside an if statement i.e if(distance>=circumfrance) {motor.stop();}	
+	//Use quarter_turn_distance as limit inside an if statement i.e if(distance>=quarter_turn_distance) {motor.stop();}	
 }
 };
 #endif																		//End Class Decleration
-
