@@ -1,28 +1,27 @@
 //Included Libraries
 #ifndef Task_3_h
 #define Task_3_h
-#include <IntervalCheckTimer.h>
-#include <InterruptBasedSpeedMeasure.h>
-#include <DCmotor.h>
-#include <InterruptBasedSpeedMeasure.h>
-#include <SystemControl_Unit.h>												
+#include "IntervalCheckTimer.h"
+#include "InterruptBasedSpeedMeasure.h"
+#include "DCmotor.h"
+#include "SystemControl_Unit.h"												
 
 class task_3{
 public:
 //Classes and Objects
-IntervalCheckTimer timer;													//Object "timer" declared from class "IntervalCheckTimer"
+IntervalCheckTimer timer;													                  //Object "timer" declared from class "IntervalCheckTimer"
 InterruptSpeedMeasure rotation_counter_L, rotation_counter_R;				//Objects "rotation_counter L&R" declared from class "InterruptSpeedMeasure"
-SystemControler MotorLeft, MotorRight;										//Objects "Motor L&R" declared from class "SystemControler"
-HBridgeDCmotor hbdcmotor_R, hbdcmotor_L;									//Objects "hbdcmotor L&R" declared from class "HBridgeDCmotor"
-
+SystemControler MotorLeft, MotorRight;										          //Objects "Motor L&R" declared from class "SystemControler"
+HBridgeDCmotor hbdcmotor_R, hbdcmotor_L;									          //Objects "hbdcmotor L&R" declared from class "HBridgeDCmotor"
+basic_speed_PID motor_L, motor_R;
 //System Constants
-const int inp_interr_on_circle=49;											//Interupt Number
-const int Wc = 6;															//Width of car
-const int wheel_diameter = 57;	
-const int default_PWM = 60;
-const int default_speed = 100;
+const int Wc = 6;															                      //Width of car
+const int wheel_diameter = 57;	                                    //Diameter of wheel (mm)
+const int default_PWM = 60;                                         //Default PWM Value
+const int default_speed = 100;                                      //Default Speed (RPM)
+
 //Global Variables
-double RPM_R;
+double RPM_R;                                                       
 double RPM_L;
 
 //Setup Functions
@@ -32,13 +31,13 @@ void setup_Hardware()
     int directionpin_L=7;													//Left Direction Pin
     int motorpin_R=8;														//Right PWM Pin
     int directionpin_R=10;													//Right Direction Pin
-    MotorLeft.PID_SetupHardware(motorpin_L, directionpin, int_0);
-    MotorRight.PID_SetupHardware(motorpin_R, directionpin, int_1);
-    MotorRight.setup_HBridgeDCmotor(motorpin_R,directionpin_R);
-	MotorLeft.setup_HBridgeDCmotor(motorpin_L,directionpin_L);
+    MotorLeft.PID_SetupHardware(motorpin_L, directionpin_L, int_0);
+    MotorRight.PID_SetupHardware(motorpin_R, directionpin_R, int_1);
+    hbdcmotor_R.setup_HBridgeDCmotor(motorpin_R,directionpin_R);
+	  hbdcmotor_L.setup_HBridgeDCmotor(motorpin_L,directionpin_L);
 }
 
-void setup_speed_measurement(inp_interr_on_circle)
+void setup_speed_measurement(const int inp_interr_on_circle)
 {
 	rotation_counter_L.setupSpeedMeasure(int_0,inp_interr_on_circle);		//Initialise Left Speed Counter
 	rotation_counter_R.setupSpeedMeasure(int_1,inp_interr_on_circle);		//Initialise Right Speed counter
@@ -58,7 +57,7 @@ void setup_PID()
 void master_Setup()
 {
 	setup_Hardware();
-	setup_speed_measurement();
+	setup_speed_measurement(49);
 	setup_PID();
 }
 
@@ -100,12 +99,11 @@ void delta_speed_fun(int inp_speed, float delta_percent, int time_durr, bool add
 			RPM_R=rotation_counter_R.getRPMandUpdate();						//Get Speed of Right Motor in RPM
 			RPM_L=rotation_counter_L.getRPMandUpdate();						//Get Speed of Left Motor in RPM
 		}
-		
-		double PWM_R=MotorRight.ComputePID_output(new_output_speed,RPM_R);	//Compute Required PWM output Left
+		double PWM_L=motor_L.ComputePID_output(new_output_speed,RPM_L);  //Compute Required PWM output Right
 		hbdcmotor_L.start();												//Start Left Motor
 		hbdcmotor_L.setSpeedPWM(PWM_L);										//Set Speed in PWM
 		
-		double PWM_L=MotorLeft.ComputePID_output(new_output_speed,RPM_L);	//Compute Required PWM output Right
+		double PWM_R=motor_R.ComputePID_output(new_output_speed,RPM_R);  //Compute Required PWM output Left
 		hbdcmotor_R.start();												//Start Right Motor
 		hbdcmotor_R.setSpeedPWM(PWM_R);										//Set Speed in PWM
 	}
@@ -123,9 +121,9 @@ void rotate_counter_clockwise(int radius, int inp_RPM_R)
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
 		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
 	}
-	double PWM_R=MotorRight.ComputePID_output(inp_RPM_R,RPM_L);				//Compute Required PWM output
+	double PWM_R=motor_R.ComputePID_output(inp_RPM_R,RPM_L);				//Compute Required PWM output
 	double target_RPM_L =  ((Wc+radius)/radius)*RPM_R;				    	//Calculate Left Wheel Velocity
-	double PWM_L=MotorLeft.ComputePID_output(speed_left,RPM_L);				//Compute Required PWM output
+	double PWM_L=motor_L.ComputePID_output(target_RPM_L,RPM_L);				//Compute Required PWM output
 	hbdcmotor_L.start();													//Start Left Motor
 	hbdcmotor_L.setSpeedPWM(PWM_L);											//Set Speed in PWM
 	double distance = distance_traveled_L();
@@ -146,9 +144,9 @@ void rotate_clockwise(int radius, int inp_RPM_L)
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
 		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
 	}
-	double PWM_L=MotorLeft.ComputePID_output(inp_RPM_L,RPM_L);				//Compute Required PWM output
+	double PWM_L=motor_L.ComputePID_output(inp_RPM_L,RPM_L);				//Compute Required PWM output
 	double Target_RPM_R =  ((Wc+radius)/radius)*RPM_L;				    	//Calculate Left Wheel Velocity
-	double PWM_R=MotorRight.ComputePID_output(Target_RPM_R,RPM_R);			//Compute Required PWM output
+	double PWM_R=motor_R.ComputePID_output(Target_RPM_R,RPM_R);			//Compute Required PWM output
 	hbdcmotor_L.start();													//Start Left Motor
 	hbdcmotor_L.setSpeedPWM(default_PWM);									//Set Speed in PWM
 	hbdcmotor_R.start();													//Start Right Motor
@@ -165,12 +163,12 @@ void turn_90_L(int inp_RPM_L)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
-	float quarter_turn_distance = 0.5*(3.1415926539)*radius;				//Calculate Distance
+	float quarter_turn_distance = 0.5*(3.1415926539)*(wheel_diameter/2);				//Calculate Distance
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
 	}
-	double PWM_L=MotorLeft.ComputePID_output(inp_RPM_L,RPM_L);				//Compute Required PWM output
+	double PWM_L=motor_L.ComputePID_output(inp_RPM_L,RPM_L);			//Compute Required PWM output
 	hbdcmotor_L.start();													//Start Left Motor
 	hbdcmotor_L.setSpeedPWM(PWM_L);											//Set Speed in PWM
 	double distance = distance_traveled_L();
@@ -185,13 +183,13 @@ void turn_90_R(int inp_RPM_R)
 {
 	hbdcmotor_R.stop();														//Stop Right Motor
 	hbdcmotor_L.stop();														//Stop Left Motor
-	float quarter_turn_distance = 0.5*(3.1415926539)*radius;				//Calculate Distance
+	float quarter_turn_distance = 0.5*(3.1415926539)*(wheel_diameter/2);				//Calculate Distance
 	hbdcmotor_R.start();													//Start Right Motor
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
 		RPM_R=rotation_counter_R.getRPMandUpdate();							//Get Speed of Right Motor in RPM
 	}
-	double PWM_R=MotorRight.ComputePID_output(inp_RPM_R,RPM_R);				//Compute Required PWM output
+	double PWM_R=motor_R.ComputePID_output(inp_RPM_R,RPM_R);			//Compute Required PWM output
 	hbdcmotor_R.setSpeedPWM(PWM_R);											//Set Speed in PWM
 	double distance = distance_traveled_R();
 	if (distance >= quarter_turn_distance)
@@ -201,4 +199,4 @@ void turn_90_R(int inp_RPM_R)
 	}
 }
 };
-#endif																		//End Class Decleration												//End Class Decleration
+#endif																		//End Class Decleration											//End Class Decleration												//End Class Decleration
