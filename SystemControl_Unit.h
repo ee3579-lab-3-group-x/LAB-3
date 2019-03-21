@@ -286,12 +286,22 @@ public:
 	void setTunings(double Kp, double Ki, double Kd) {
 		pidcontroler.setTunings(Kp,Ki,Kd);
 	}
+	/*
 	void CheckInputs_and_Control() {
 		// check buttons and react to that;
+		setTargetSpeed(1000);
+		pidcontroler.motorStart();
 		if (isTimeToCheckInputButtons()) {
-			checkButtonsAndUpdateMotor();
-			setTargetSpeed(CheckPotReading());
+			//checkButtonsAndUpdateMotor();
+			setTargetSpeed(150);
+			pidcontroler.motorStart();
+			//setTargetSpeed(CheckPotReading());
+			//Original Line of code above, checks a potentiometer reading for the new speed.
+			//We will define this new speed ourselves.
+
 		}
+	
+
 		if (isTimeToMatlabVerbose() && matlabverboseenabled) {
 			pidcontroler.matlabSerialPrint();
 		}
@@ -299,6 +309,11 @@ public:
 		if (isTimeToPrintVerbose() && verbose) PrintControlValues();
 		pidcontroler.runSystem();
 		//logSpeedValues(0);
+	}
+	*/
+	void CheckInputs_and_Control() {
+		//setTargetSpeed(150);
+		pidcontroler.motorStart();
 	}
 };
 #endif // !SYSTEMCONTROL_UNIT_H

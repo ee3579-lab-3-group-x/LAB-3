@@ -94,7 +94,10 @@ public:
 		Setpoint = SetPoint_Store;
 		//scaled_Setpoint = mapDouble(Setpoint, 0, Scalling_MAXRPM, 0, 255);
 		Motor.start();
-		Motor.setSpeedPWM((int)Input_PWM);
+		//Code Below: Commented out as we are testing a starting PWM.
+		//Motor.setSpeedPWM((int)Input_PWM);
+		Motor.setSpeedPWM(150);
+
 	}
 	void motorStop() {
 		Setpoint=0;
