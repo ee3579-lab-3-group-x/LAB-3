@@ -58,18 +58,16 @@ void Setup_Hardware_PID(const int motorpin_L,const int directionpin_L,const int 
 //Calculation Functions
 double distance_traveled_L()                                                  //Function to calculate distance travelled by left wheel
 {
-	double distance = rotation_counter_L.GetkDistanceCount();             //Count and Store Number of Interupts
-	//double distance = (interupt_count/49)*((3.1415926539)*wheel_diameter);	    //Calculate and Store Distance (mm)
+	double interupt_count = rotation_counter_L.GetkDistanceCount();             //Count and Store Number of Interupts
+	double distance = (interupt_count/49)*((3.1415926539)*wheel_diameter);	    //Calculate and Store Distance (mm)
 	return distance;													                                  //Return to allow for external acess
-  //return interupt_count;
 }
 
 double distance_traveled_R()                                                  //Function to calculate distance travelled by left wheel
 {
-	double distance = rotation_counter_R.GetkDistanceCount();            //Count and Store Number of Rotations
-	//double distance = (interupt_count/49)*((3.1415926539)*wheel_diameter);     //Calculate and Store Distance (mm)
+	double interupt_count = rotation_counter_R.GetkDistanceCount();            //Count and Store Number of Rotations
+	double distance = (interupt_count/49)*((3.1415926539)*wheel_diameter);     //Calculate and Store Distance (mm)
 	return distance;                                                           //Return to allow for external acess
- //return interupt_count;
 }
 
 //Opperational Functions
@@ -124,58 +122,56 @@ void drive_straight(int inp_RPM, int distance)
   }
   double distance_R = distance_traveled_R();                          //Calculate and Store Distance traveled
   double distance_L = distance_traveled_L();                          //Calculate and Store Distance traveled
-  Serial.println("Interput Count");
-  Serial.print(distance_R);
-  if ((distance_R <= distance)||(distance_L <= distance))
+  if ((distance_R <= (double)distance)||(distance_L <= (double)distance))
   {
 
    PWM_R=motor_R.ComputePID_output(inp_RPM,RPM_R);            //Compute Required PWM output
    PWM_L=motor_L.ComputePID_output(inp_RPM,RPM_L);            //Compute Required PWM output
-  }else{
-  PWM_R=0;
-  PWM_L=0;
-  }
-  hbdcmotor_R. set_jumpstart(true);                                 //Jumpstart Right Motor
+   hbdcmotor_R. set_jumpstart(true);                                 //Jumpstart Right Motor
   hbdcmotor_L. set_jumpstart(true);                                 //Jumpstart Left Motor
   hbdcmotor_R.start();                                              //Start Right Motor
   hbdcmotor_L.start();                                              //Start Left Motor
   hbdcmotor_R.setSpeedPWM(PWM_R);                                   //Set Speed in PWM
   hbdcmotor_L.setSpeedPWM(PWM_L);                                   //Set Speed in PWM
+  }else{
+    hbdcmotor_R.stop();                                               //Stop Right Motor
+    hbdcmotor_L.stop();                                               //Stop Left Motor
+  }
 }
 
 void rotate_clockwise(int radius, int inp_RPM_R, int itterations)
 {
   hbdcmotor_R.stop();                                       //Stop Right Motor
   hbdcmotor_L.stop();                                       //Stop Left Motor
-  double circumfrance = 2*(3.1415926539)*radius;              //Calculate Circumfrance
+  double circumfrance = 2*(3.1415926539)*(double)radius;              //Calculate Circumfrance
   if(timer.isMinChekTimeElapsedAndUpdate())
   {
     RPM_L=rotation_counter_L.getRPMandUpdate();             //Get Speed of Left Motor in RPM
     RPM_R=rotation_counter_R.getRPMandUpdate();             //Get Speed of Right Motor in RPM
   }
   double distance = distance_traveled_L();                          //Calculate and Store Distance traveled
-  if (distance <= circumfrance*itterations){                        //If distance travelled is >= desired path
-   double Target_RPM_L =  ((Wc+radius)/radius)*inp_RPM_R;                //Calculate Left Wheel Velocity
+  if (distance <= circumfrance*(double)itterations){                        //If distance travelled is >= desired path
+   double Target_RPM_L =  (((double)Wc+(double)radius)/(double)radius)*(double)inp_RPM_R;                //Calculate Left Wheel Velocity
    PWM_R=motor_R.ComputePID_output(inp_RPM_R,RPM_R);          //Compute Required PWM output
    PWM_L=motor_L.ComputePID_output(Target_RPM_L,RPM_L);       //Compute Required PWM output
-
-  }else{
-  hbdcmotor_R.stop();                                               //Stop Right Motor
-  hbdcmotor_L.stop();                                               //Stop Left Motor
-  }
-  hbdcmotor_R. set_jumpstart(true);                                 //Jumpstart Right Motor
+     hbdcmotor_R. set_jumpstart(true);                                 //Jumpstart Right Motor
   hbdcmotor_L. set_jumpstart(true);                                 //Jumpstart Left Motor
   hbdcmotor_R.start();                                              //Start Right Motor
   hbdcmotor_L.start();                                              //Start Left Motor
   hbdcmotor_R.setSpeedPWM(PWM_R);                                   //Set Speed in PWM
   hbdcmotor_L.setSpeedPWM(PWM_L);                                   //Set Speed in PWM
+
+  }else{
+  hbdcmotor_R.stop();                                               //Stop Right Motor
+  hbdcmotor_L.stop();                                               //Stop Left Motor
+  }
 }
 
 void rotate_counter_clockwise(int radius, int inp_RPM_L, int itterations)
 {
 	hbdcmotor_R.stop();														            //Stop Right Motor
 	hbdcmotor_L.stop();														            //Stop Left Motor
-	double circumfrance = 2*(3.1415926539)*radius;							//Calculate Circumfrance
+	double circumfrance = 2*(3.1415926539)*(double)radius;							//Calculate Circumfrance
 	if(timer.isMinChekTimeElapsedAndUpdate())
 	{
 		RPM_L=rotation_counter_L.getRPMandUpdate();							//Get Speed of Left Motor in RPM
@@ -184,26 +180,26 @@ void rotate_counter_clockwise(int radius, int inp_RPM_L, int itterations)
 
 	double distance = distance_traveled_R();                          //Calculate and Store Distance traveled
 	if (distance <= circumfrance*itterations){                        //If distance travelled is >= desired path
-    double Target_RPM_R =  ((Wc+radius)/radius)*inp_RPM_L;            //Calculate Left Wheel Velocity
+    double Target_RPM_R =  (((double)Wc+(double)radius)/(double)radius)*(double)inp_RPM_L;            //Calculate Left Wheel Velocity
    PWM_L=motor_L.ComputePID_output(inp_RPM_L,RPM_L);          //Compute Required PWM output
    PWM_R=motor_R.ComputePID_output(Target_RPM_R,RPM_R);       //Compute Required PWM output
-	}else{
-  PWM_R=0;
-  PWM_L=0;
-	}
   hbdcmotor_R. set_jumpstart(true);                                 //Jumpstart Right Motor
   hbdcmotor_L. set_jumpstart(true);                                 //Jumpstart Left Motor
   hbdcmotor_R.start();                                              //Start Right Motor
   hbdcmotor_L.start();                                              //Start Left Motor
   hbdcmotor_R.setSpeedPWM(PWM_R);                                   //Set Speed in PWM
   hbdcmotor_L.setSpeedPWM(PWM_L);                                   //Set Speed in PWM
+	}else{
+    hbdcmotor_R.stop();                                               //Stop Right Motor
+    hbdcmotor_L.stop();                                               //Stop Left Motor
+	}
 }
 
 void turn_L(int inp_RPM_L,int angle)                                                 //Function to turn 90 degrees to the left
 {
 	hbdcmotor_R.stop();														                              //Stop Right Motor
 	hbdcmotor_L.stop();														                              //Stop Left Motor
-  float turn_distance = (2*(3.1415926539)*(Wc))*(angle/360);                  //Calculate Distance
+  double turn_distance = (2*(3.1415926539)*((double)Wc))*((double)angle/360);                  //Calculate Distance
   double distance = distance_traveled_L();                                    //Calculate and Store Distance traveled
  
 	if(timer.isMinChekTimeElapsedAndUpdate())                                   //If check timer has expired...
@@ -212,21 +208,21 @@ void turn_L(int inp_RPM_L,int angle)                                            
 	}
   if (distance <= turn_distance)                                      //If distance travelled is >= desired path
   {
-  	double PWM_L=motor_L.ComputePID_output(inp_RPM_L,RPM_L);			              //Compute Required PWM output
-
-  }else{
-  PWM_L=0;
-	}
-     hbdcmotor_L. set_jumpstart(true);                                //Jumpstart Left Motor
-   hbdcmotor_L.start();                                                        //Start Left Motor
-    hbdcmotor_L.setSpeedPWM(PWM_L);                                             //Set Speed in PWM
+    double PWM_L=motor_L.ComputePID_output(inp_RPM_L,RPM_L);                    //Compute Required PWM output
+    hbdcmotor_L. set_jumpstart(true);                                           //Jumpstart Left Motor
+    hbdcmotor_L.start();                                                        //Start Left Motor
+    hbdcmotor_L.setSpeedPWM(PWM_R);                                             //Set Speed in PWM
+  }else if (distance > turn_distance){
+    hbdcmotor_R.stop();                                               //Stop Right Motor
+    hbdcmotor_L.stop();                                               //Stop Left Motor
+  }
 }
 
 void turn_R(int inp_RPM_R,int angle)                                               //Function to turn 90 degrees to the right
 {
   hbdcmotor_R.stop();                                                         //Stop Right Motor
   hbdcmotor_L.stop();                                                         //Stop Left Motor
-  float turn_distance = (2*(3.1415926539)*(Wc))*(angle/360);        //Calculate Distance
+  double turn_distance = (2*(3.1415926539)*((double)Wc))*((double)angle/360);        //Calculate Distance
   double distance = distance_traveled_R();                                    //Calculate and Store Distance traveled
  
   if(timer.isMinChekTimeElapsedAndUpdate())                                   //If check timer has expired...
@@ -236,12 +232,13 @@ void turn_R(int inp_RPM_R,int angle)                                            
   if (distance <= turn_distance)                                      //If distance travelled is >= desired path
   {
     double PWM_R=motor_R.ComputePID_output(inp_RPM_R,RPM_R);                    //Compute Required PWM output
-  }else{
-  PWM_R=0;
-  }
-    hbdcmotor_R. set_jumpstart(true);                                //Jumpstart Left Motor
+    hbdcmotor_R. set_jumpstart(true);                                           //Jumpstart Left Motor
     hbdcmotor_R.start();                                                        //Start Left Motor
     hbdcmotor_R.setSpeedPWM(PWM_R);                                             //Set Speed in PWM
+  }else if (distance > turn_distance){
+    hbdcmotor_R.stop();                                               //Stop Right Motor
+    hbdcmotor_L.stop();                                               //Stop Left Motor
+  }
 }
 
 void task_4_fun(int radius, int inp_RPM, int itterations, int distance,int inp_turning_RPM)
@@ -262,4 +259,4 @@ void task_4_fun(int radius, int inp_RPM, int itterations, int distance,int inp_t
   }
 }
 };
-#endif																		                                  //End Class Decleration
+#endif																		                                  //End Class Decleration					                                  //End Class Decleration
